@@ -1,0 +1,63 @@
+from math import factorial
+class MultiServerModel(object):
+    
+    def __init__(self,arrival_rate,service_rate,number_servers):
+        # starting vars
+        self.arrival_rate = arrival_rate
+        self.service_rate = service_rate
+        self.number_servers = number_servers
+        # for functions
+        self.lm = arrival_rate / service_rate
+        self.factorial_servers = float(factorial(number_servers))
+        self.combined_service_rate = number_servers * service_rate
+        self.average_server_utilization = arrival_rate / self.combined_service_rate
+        # store self calculated empty probability
+        self.prob_empty = self.probability_empty()
+
+    def average_time_in_system(self):
+        return self.average_time_on_line() + (1/self.service_rate)
+    
+    def average_customer_in_system(self):
+        return self.arrival_rate * self.average_time_in_system()
+    
+    def average_time_on_line(self):
+        return self.average_on_line() / self.arrival_rate
+    
+    def average_service_time(self):
+        return 1 / self.service_rate
+    
+    def average_time_between_arrivals(self):
+        return 1 / self.arrival_rate
+    
+    def average_on_line(self):
+        return (self.prob_empty * self.lm**self.number_servers * self.average_server_utilization)\
+            / (self.factorial_servers*(1-self.average_server_utilization)**2)
+    
+    def probability_empty(self):
+        part_sum = 0
+        for server in range(int(self.number_servers)):
+            part_sum += 1.0/float(factorial(server)) * (self.lm)**server
+        return 1.0 / (part_sum + (1.0 / self.factorial_servers * self.lm**self.number_servers)\
+                * (self.combined_service_rate/(self.combined_service_rate-self.arrival_rate)))
+
+    def probability_in_system(self,n):
+        if n > self.number_servers:
+            answer = ((self.lm **n)* self.prob_empty) / (self.number_servers**(n-self.number_servers)\
+                                                         * self.factorial_servers)
+        elif n <= self.number_servers:
+            answer = ((self.lm **n)* self.prob_empty) / float(factorial(n))
+        return answer
+    
+    def list_of_prob_in_system(self,trials=10):
+        values = []
+        for _ in range(trials):
+            values.append(x.probability_in_system(_))
+        return values
+    
+    def performance_measures(self):
+        print "avg server util: ", self.average_server_utilization
+        print "prob system is empty: ", self.probability_empty()
+        print "avg number in system: ", self.average_customer_in_system()
+        print "avg in waiting line: ", self.average_on_line()
+        print "avg time in system: ", self.average_time_in_system()
+        print "avg time on line: ", self.average_time_on_line()
